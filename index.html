@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>NCR Dashboard — 2024–2026</title>
+<style>
+  :root {
+    --bg: #FAFBFC;
+    --panel: #FFFFFF;
+    --border: #E4E8EE;
+    --border-strong: #D3D9E2;
+    --text: #1F2933;
+    --text-muted: #6B7280;
+    --accent: #2F5FA3;
+    --accent-dark: #1B3B6F;
+    --red: #C0392B;
+    --orange: #C1560C;
+    --green: #219653;
+    --y2024: #7FA8D9;
+    --y2025: #2F5FA3;
+    --y2026: #1B3B6F;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--text);
+  }
+  .banner {
+    background: linear-gradient(90deg, #E2EFDA 0%, #DCEAD6 100%);
+    padding: 16px 28px;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  .banner h1 { margin: 0; font-size: 20px; font-weight: 700; }
+  .banner .sub { margin-top: 3px; font-size: 12.5px; color: #4B5A4E; }
+
+  .content { padding: 20px 28px 40px; max-width: 1300px; margin: 0 auto; }
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .kpi-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .kpi-card .label { font-size: 12px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+  .kpi-card .value { font-size: 28px; font-weight: 700; color: var(--accent-dark); margin-top: 4px; }
+  .kpi-card .note { font-size: 11.5px; color: var(--text-muted); margin-top: 3px; }
+
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 16px;
+    margin-bottom: 22px;
+  }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+  }
+  .panel h2 { font-size: 14px; margin: 0 0 12px; font-weight: 700; color: var(--text); }
+  .panel .subtitle { font-size: 11.5px; color: var(--text-muted); margin: -8px 0 12px; }
+
+  .bar-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .bar-label { width: 108px; font-size: 11.5px; font-family: 'SFMono-Regular', Consolas, monospace; color: var(--text); flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; background: #F1F3F6; border-radius: 4px; height: 20px; position: relative; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; }
+  .bar-value { font-size: 11px; font-weight: 700; color: white; padding-left: 6px; white-space: nowrap; }
+  .bar-value.outside { color: var(--text); padding-left: 4px; }
+
+  .year-bars { display: flex; align-items: flex-end; gap: 24px; height: 200px; padding: 10px 20px 0; justify-content: center; }
+  .year-bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 70px; }
+  .year-bar { width: 52px; border-radius: 6px 6px 0 0; display: flex; align-items: flex-start; justify-content: center; padding-top: 6px; }
+  .year-bar-value { font-size: 14px; font-weight: 700; color: white; }
+  .year-bar-label { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+  }
+  .toolbar input[type="text"] {
+    padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 6px;
+    font-size: 13px; width: 260px; outline: none; font-family: inherit;
+  }
+  .toolbar input[type="text"]:focus { border-color: var(--accent); }
+  .toolbar .count { margin-left: auto; font-size: 12px; color: var(--text-muted); }
+
+  .filter-pills { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .filter-pills .flabel { font-size: 12px; color: var(--text-muted); font-weight: 600; margin-right: 2px; }
+  .pill {
+    padding: 6px 13px; border-radius: 999px; border: 1px solid var(--border-strong);
+    background: white; font-size: 12.5px; font-weight: 600; color: var(--text-muted);
+    cursor: pointer; user-select: none; transition: all 0.12s;
+  }
+  .pill:hover { border-color: var(--accent); color: var(--accent); }
+  .pill.active { background: var(--accent); border-color: var(--accent); color: white; }
+  .pill.client { border-color: #B98900; }
+  .pill.client.active { background: #B98900; border-color: #B98900; }
+
+  .job-select-wrap { position: relative; }
+  .job-select-btn {
+    padding: 6px 13px; border-radius: 6px; border: 1px solid var(--border-strong);
+    background: white; font-size: 12.5px; font-weight: 600; color: var(--accent);
+    cursor: pointer; user-select: none; display: flex; align-items: center; gap: 5px;
+  }
+  .job-select-btn:hover { border-color: var(--accent); }
+  .job-select-panel {
+    display: none; position: absolute; top: 36px; left: 0; z-index: 20;
+    background: white; border: 1px solid var(--border-strong); border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.12); width: 260px; max-height: 320px;
+    overflow-y: auto; padding: 8px;
+  }
+  .job-select-panel.open { display: block; }
+  .job-select-actions { display: flex; gap: 8px; padding: 4px 4px 8px; border-bottom: 1px solid var(--border); margin-bottom: 6px; }
+  .job-select-actions button {
+    font-size: 11px; padding: 4px 8px; border-radius: 5px; border: 1px solid var(--border-strong);
+    background: var(--bg); cursor: pointer; color: var(--text);
+  }
+  .job-select-actions button:hover { border-color: var(--accent); color: var(--accent); }
+  .job-check-row { display: flex; align-items: center; gap: 7px; padding: 4px 4px; font-size: 12px; font-family: 'SFMono-Regular', Consolas, monospace; }
+  .job-check-row:hover { background: #F0F5FC; border-radius: 4px; }
+  .job-check-row input { cursor: pointer; }
+  .job-check-row label { cursor: pointer; flex:1; }
+  .job-check-row .cnt { color: var(--text-muted); font-family: inherit; font-size: 10.5px; }
+
+  .quarter-bars { display: flex; align-items: flex-end; gap: 10px; height: 180px; padding: 10px 10px 0; justify-content: center; }
+  .quarter-bar-col { display: flex; flex-direction: column; align-items: center; gap: 5px; width: 52px; }
+  .quarter-bar { width: 34px; border-radius: 5px 5px 0 0; background: var(--accent); display: flex; align-items: flex-start; justify-content: center; padding-top: 4px; min-height: 2px; }
+  .quarter-bar-value { font-size: 11px; font-weight: 700; color: white; }
+  .quarter-bar-value.zero { color: var(--text-muted); position: relative; top: -16px; }
+  .quarter-bar-label { font-size: 10.5px; font-weight: 600; color: var(--text-muted); }
+
+  table.data-table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 10px; overflow: hidden; border: 1px solid var(--border); }
+  table.data-table th {
+    background: var(--accent); color: white; font-size: 11.5px; font-weight: 600;
+    text-align: left; padding: 10px 14px; cursor: pointer; user-select: none;
+  }
+  table.data-table th.num, table.data-table td.num { text-align: center; }
+  table.data-table th:hover { background: var(--accent-dark); }
+  table.data-table th .arrow { font-size: 10px; margin-left: 4px; opacity: 0.7; }
+  table.data-table td { padding: 8px 14px; font-size: 12.5px; border-bottom: 1px solid var(--border); }
+  table.data-table td.job { font-family: 'SFMono-Regular', Consolas, monospace; }
+  table.data-table tr:nth-child(even) td { background: #FBFCFD; }
+  table.data-table tr:hover td { background: #EEF3FA; }
+  table.data-table td.total { font-weight: 700; color: var(--accent-dark); }
+</style>
+</head>
+<body>
+<div class="banner">
+  <h1>NCR Dashboard — 2024–2026</h1>
+  <div class="sub">Non-conformance reports per job, aggregated from NCR Tracking workbooks (Oct 2023–Aug 2026)</div>
+</div>
+
+<div class="content">
+  <div class="toolbar" style="margin-bottom:18px;">
+    <div class="filter-pills" id="categoryPills">
+      <span class="flabel">Filter:</span>
+    </div>
+    <div class="job-select-wrap" id="jobSelectWrap" style="display:none;">
+      <div class="job-select-btn" id="jobSelectBtn">Select M200 Jobs <span id="jobSelectCount"></span> ▾</div>
+      <div class="job-select-panel" id="jobSelectPanel">
+        <div class="job-select-actions">
+          <button id="selectAllBtn">Select all</button>
+          <button id="deselectAllBtn">Deselect all</button>
+        </div>
+        <div id="jobCheckList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <div class="charts-row">
+    <div class="panel">
+      <h2>Top 15 Jobs by NCR Count</h2>
+      <div class="subtitle" id="topSubtitle">Highest total non-conformance reports, 2024–2026 combined</div>
+      <div id="topJobsChart"></div>
+    </div>
+    <div class="panel">
+      <h2>NCRs by Year</h2>
+      <div class="subtitle">Total across selected jobs</div>
+      <div class="year-bars" id="yearChart"></div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-bottom:22px;">
+    <h2>NCRs per Job by Quarter</h2>
+    <div class="subtitle">Average NCRs per affected job, Q1 2024 through Q3 2026 (normalizes for how many jobs were active that quarter)</div>
+    <div class="quarter-bars" id="quarterChart"></div>
+  </div>
+
+  <div class="panel">
+    <h2>All Jobs</h2>
+    <div class="toolbar">
+      <input type="text" id="searchBox" placeholder="Search job number…">
+      <div class="count" id="rowCount"></div>
+    </div>
+    <table class="data-table" id="dataTable">
+      <thead>
+        <tr>
+          <th data-key="Job">Job (Project ID) <span class="arrow"></span></th>
+          <th data-key="Category" class="num">Category <span class="arrow"></span></th>
+          <th data-key="2024" class="num">2024 <span class="arrow"></span></th>
+          <th data-key="2025" class="num">2025 <span class="arrow"></span></th>
+          <th data-key="2026" class="num">2026 <span class="arrow"></span></th>
+          <th data-key="Total" class="num">Total <span class="arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const RAW = {"jobs": [{"Job": "M200468-04", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 32}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 19, "2026Q2": 13, "2026Q3": 0}, "Total": 32}, {"Job": "M200468-02", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 20}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 10, "2026Q2": 9, "2026Q3": 1}, "Total": 20}, {"Job": "M200428-01", "Category": "M200", "Years": {"2024": 11, "2025": 4, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 1, "2024Q4": 10, "2025Q1": 3, "2025Q2": 1, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 15}, {"Job": "M200480-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 15}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 6, "2026Q3": 9}, "Total": 15}, {"Job": "M400015-04", "Category": "M400", "Years": {"2024": 0, "2025": 0, "2026": 14}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 3, "2026Q2": 11, "2026Q3": 0}, "Total": 14}, {"Job": "M400007-01", "Category": "M400", "Years": {"2024": 9, "2025": 3, "2026": 0}, "Quarters": {"2024Q1": 3, "2024Q2": 1, "2024Q3": 3, "2024Q4": 2, "2025Q1": 3, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 12}, {"Job": "M200420-01", "Category": "M200", "Years": {"2024": 11, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 10, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 11}, {"Job": "M200469-01", "Category": "M200", "Years": {"2024": 0, "2025": 3, "2026": 8}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 3, "2026Q1": 1, "2026Q2": 1, "2026Q3": 6}, "Total": 11}, {"Job": "M200354-04", "Category": "M200", "Years": {"2024": 10, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 7, "2024Q2": 3, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 10}, {"Job": "M200468-03", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 10}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 1, "2026Q2": 9, "2026Q3": 0}, "Total": 10}, {"Job": "M200429-02", "Category": "M200", "Years": {"2024": 4, "2025": 5, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 4, "2025Q1": 5, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 9}, {"Job": "M200439-01", "Category": "M200", "Years": {"2024": 0, "2025": 9, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 5, "2025Q3": 3, "2025Q4": 1, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 9}, {"Job": "M200462-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 8}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 1, "2025Q4": 0, "2026Q1": 0, "2026Q2": 8, "2026Q3": 0}, "Total": 9}, {"Job": "M200480-03", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 9}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 2, "2026Q3": 7}, "Total": 9}, {"Job": "M200406-02", "Category": "M200", "Years": {"2024": 8, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 4, "2024Q3": 4, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 8}, {"Job": "M200426-01", "Category": "M200", "Years": {"2024": 0, "2025": 6, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 2, "2025Q3": 3, "2025Q4": 1, "2026Q1": 2, "2026Q2": 0, "2026Q3": 0}, "Total": 8}, {"Job": "M200354-02", "Category": "M200", "Years": {"2024": 7, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 7, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200391-01", "Category": "M200", "Years": {"2024": 7, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 6, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200410-06", "Category": "M200", "Years": {"2024": 7, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 5, "2024Q4": 2, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200429-01", "Category": "M200", "Years": {"2024": 4, "2025": 3, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 4, "2025Q1": 3, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200438-03", "Category": "M200", "Years": {"2024": 0, "2025": 7, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 4, "2025Q2": 3, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200456-01", "Category": "M200", "Years": {"2024": 0, "2025": 7, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 2, "2025Q3": 5, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200468-01", "Category": "M200", "Years": {"2024": 0, "2025": 4, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 2, "2025Q4": 2, "2026Q1": 3, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200471-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 6}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 1, "2026Q1": 6, "2026Q2": 0, "2026Q3": 0}, "Total": 7}, {"Job": "M200480-02", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 7}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 7}, "Total": 7}, {"Job": "M200482-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 7}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 4, "2026Q3": 3}, "Total": 7}, {"Job": "M200354-01", "Category": "M200", "Years": {"2024": 6, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 6, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200354-05", "Category": "M200", "Years": {"2024": 6, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 3, "2024Q2": 3, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200422-01", "Category": "M200", "Years": {"2024": 6, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 5, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200438-01", "Category": "M200", "Years": {"2024": 0, "2025": 6, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 3, "2025Q2": 3, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200438-02", "Category": "M200", "Years": {"2024": 0, "2025": 6, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 3, "2025Q2": 3, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200442-01", "Category": "M200", "Years": {"2024": 0, "2025": 6, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 3, "2025Q2": 3, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200449-01", "Category": "M200", "Years": {"2024": 0, "2025": 6, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 5, "2025Q2": 0, "2025Q3": 0, "2025Q4": 1, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200463-01", "Category": "M200", "Years": {"2024": 0, "2025": 6, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 6, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 6}, {"Job": "M200473-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 6}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 4, "2026Q3": 2}, "Total": 6}, {"Job": "M200484-05", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 6}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 5, "2026Q3": 1}, "Total": 6}, {"Job": "M200361-04", "Category": "M200", "Years": {"2024": 4, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 2, "2024Q2": 2, "2024Q3": 0, "2024Q4": 0, "2025Q1": 1, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 5}, {"Job": "M200398-01", "Category": "M200", "Years": {"2024": 5, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 4, "2024Q2": 0, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 5}, {"Job": "M200410-05", "Category": "M200", "Years": {"2024": 2, "2025": 3, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 2, "2025Q1": 3, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 5}, {"Job": "M200438-05", "Category": "M200", "Years": {"2024": 0, "2025": 5, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 2, "2025Q2": 3, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 5}, {"Job": "M200354-03", "Category": "M200", "Years": {"2024": 4, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 2, "2024Q2": 2, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200361-06", "Category": "M200", "Years": {"2024": 4, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 4, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200361-07", "Category": "M200", "Years": {"2024": 4, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 3, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200407-01", "Category": "M200", "Years": {"2024": 4, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 3, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200412-01", "Category": "M200", "Years": {"2024": 4, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 3, "2024Q2": 0, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200420-02", "Category": "M200", "Years": {"2024": 4, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 3, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200420-06", "Category": "M200", "Years": {"2024": 4, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 2, "2024Q3": 0, "2024Q4": 2, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200438-04", "Category": "M200", "Years": {"2024": 0, "2025": 4, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 2, "2025Q2": 2, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200449-02", "Category": "M200", "Years": {"2024": 0, "2025": 4, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 1, "2025Q2": 3, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200452-01", "Category": "M200", "Years": {"2024": 0, "2025": 2, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 2, "2026Q1": 2, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200459-01", "Category": "M200", "Years": {"2024": 0, "2025": 4, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 2, "2025Q3": 2, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200461-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 4}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 4, "2026Q2": 0, "2026Q3": 0}, "Total": 4}, {"Job": "M200483-03", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 4}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 2, "2026Q3": 2}, "Total": 4}, {"Job": "M200361-05", "Category": "M200", "Years": {"2024": 3, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 2, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200401-01", "Category": "M200", "Years": {"2024": 3, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 2, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200420-03", "Category": "M200", "Years": {"2024": 3, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 2, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200420-04", "Category": "M200", "Years": {"2024": 3, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 2, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200420-05", "Category": "M200", "Years": {"2024": 3, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 2, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200434-03", "Category": "M200", "Years": {"2024": 0, "2025": 3, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 3, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200437-01", "Category": "M200", "Years": {"2024": 0, "2025": 3, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 3, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200445-01", "Category": "M200", "Years": {"2024": 0, "2025": 3, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 2, "2025Q3": 1, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200449-03", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 1, "2026Q1": 2, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200460-01", "Category": "M200", "Years": {"2024": 0, "2025": 3, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 3, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200478-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 3, "2026Q2": 0, "2026Q3": 0}, "Total": 3}, {"Job": "M200483-02", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 2}, "Total": 3}, {"Job": "M200484-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 3, "2026Q3": 0}, "Total": 3}, {"Job": "M200484-03", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 3, "2026Q3": 0}, "Total": 3}, {"Job": "M200489-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 1, "2026Q2": 1, "2026Q3": 1}, "Total": 3}, {"Job": "M200496-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 2, "2026Q2": 1, "2026Q3": 0}, "Total": 3}, {"Job": "M200500-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 3}, "Total": 3}, {"Job": "M200505-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 3}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 2}, "Total": 3}, {"Job": "F101426-03", "Category": "F-Series", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 1, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200340-01", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 2, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200359-03", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200361-01", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 2, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200409-01", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 2, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200414-02", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 2, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200415-01", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 0, "2024Q3": 1, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200420-07", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200420-08", "Category": "M200", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200436-01", "Category": "M200", "Years": {"2024": 0, "2025": 2, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 1, "2025Q2": 1, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200449-04", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 2}, "Total": 2}, {"Job": "M200451-01", "Category": "M200", "Years": {"2024": 0, "2025": 2, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 2, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "M200462-03", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 2, "2026Q3": 0}, "Total": 2}, {"Job": "M200462-03 & M200462-02", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 2, "2026Q3": 0}, "Total": 2}, {"Job": "M200489-04", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 1}, "Total": 2}, {"Job": "M200493-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 2}, "Total": 2}, {"Job": "M200498-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 2}, "Total": 2}, {"Job": "M200509-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 2}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 2}, "Total": 2}, {"Job": "REV 3021-02", "Category": "Other", "Years": {"2024": 2, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 2}, {"Job": "F101222-03", "Category": "F-Series", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "F101481-12", "Category": "F-Series", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 1, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "F101595-04", "Category": "F-Series", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 1}, "Total": 1}, {"Job": "F101603-01", "Category": "F-Series", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 1, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "F101608-01", "Category": "F-Series", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200359-02", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200361-02", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200361-03", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200377-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200377-01W", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200379-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200380-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200382-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200397-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 1, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200410-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200410-02", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200410-03", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200410-04", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 1, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200420", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200422", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200423-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200430-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 1, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200432-01", "Category": "M200", "Years": {"2024": 1, "2025": 0, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 1, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200434-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 1, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200434-03 & 04", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 1, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200441-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 1, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200453-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 1, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200454-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 1, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200458-01", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 1, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200459-02", "Category": "M200", "Years": {"2024": 0, "2025": 1, "2026": 0}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 1, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200462-02", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200473 01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200475-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200479-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 1, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200484-02", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 1, "2026Q2": 0, "2026Q3": 0}, "Total": 1}, {"Job": "M200484\u201103", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200489-01-02-03-04", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200489-01-04", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200489-02", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 1}, "Total": 1}, {"Job": "M200489-02 & 04", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200489-03", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 1}, "Total": 1}, {"Job": "M200497-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 1, "2026Q3": 0}, "Total": 1}, {"Job": "M200510-01", "Category": "M200", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 1}, "Total": 1}, {"Job": "M400017-01", "Category": "M400", "Years": {"2024": 0, "2025": 0, "2026": 1}, "Quarters": {"2024Q1": 0, "2024Q2": 0, "2024Q3": 0, "2024Q4": 0, "2025Q1": 0, "2025Q2": 0, "2025Q3": 0, "2025Q4": 0, "2026Q1": 0, "2026Q2": 0, "2026Q3": 1}, "Total": 1}], "quarters": ["2024Q1", "2024Q2", "2024Q3", "2024Q4", "2025Q1", "2025Q2", "2025Q3", "2025Q4", "2026Q1", "2026Q2", "2026Q3"]};
+const ALL_JOBS = RAW.jobs;
+const QUARTERS = RAW.quarters;
+
+const FILTER_DEFS = [
+  {key:'All', label:'All', client:false, test: j => true},
+  {key:'M200', label:'M200', client:false, test: j => j.Category==='M200'},
+  {key:'M400', label:'M400', client:false, test: j => j.Category==='M400'},
+  {key:'F-Series', label:'F-Series', client:false, test: j => j.Category==='F-Series'},
+  {key:'Other', label:'Other', client:false, test: j => j.Category==='Other'},
+  {key:'VoltaGrid', label:'VoltaGrid', client:true, test: j => /^M200(468|480)-/i.test(j.Job)},
+  {key:'Propell', label:'Propell', client:true, test: j => /^M200449-/i.test(j.Job)},
+];
+
+let activeFilter = 'All';
+const M200_JOBS = ALL_JOBS.filter(j=>j.Category==='M200').sort((a,b)=>b.Total-a.Total);
+let selectedM200 = new Set(M200_JOBS.map(j=>j.Job)); // all selected by default
+
+// Build filter pills
+const pillsContainer = document.getElementById('categoryPills');
+FILTER_DEFS.forEach(f=>{
+  const btn = document.createElement('div');
+  btn.className = 'pill' + (f.client ? ' client' : '') + (f.key==='All' ? ' active' : '');
+  btn.textContent = f.label;
+  btn.dataset.key = f.key;
+  btn.addEventListener('click', ()=>{
+    activeFilter = f.key;
+    document.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active', p.dataset.key===f.key));
+    document.getElementById('jobSelectWrap').style.display = (f.key==='M200') ? 'block' : 'none';
+    renderAll();
+  });
+  pillsContainer.appendChild(btn);
+});
+
+// M200 job select dropdown
+const jobSelectBtn = document.getElementById('jobSelectBtn');
+const jobSelectPanel = document.getElementById('jobSelectPanel');
+const jobCheckList = document.getElementById('jobCheckList');
+
+M200_JOBS.forEach(j=>{
+  const row = document.createElement('div');
+  row.className = 'job-check-row';
+  const id = 'chk_' + j.Job;
+  row.innerHTML = `<input type="checkbox" id="${id}" checked><label for="${id}">${j.Job}</label><span class="cnt">${j.Total}</span>`;
+  jobCheckList.appendChild(row);
+  row.querySelector('input').addEventListener('change', (e)=>{
+    if (e.target.checked) selectedM200.add(j.Job);
+    else selectedM200.delete(j.Job);
+    updateJobSelectCount();
+    renderAll();
+  });
+});
+
+function updateJobSelectCount(){
+  document.getElementById('jobSelectCount').textContent = `(${selectedM200.size}/${M200_JOBS.length})`;
+}
+updateJobSelectCount();
+
+jobSelectBtn.addEventListener('click', (e)=>{
+  jobSelectPanel.classList.toggle('open');
+  e.stopPropagation();
+});
+document.addEventListener('click', (e)=>{
+  if (!jobSelectPanel.contains(e.target) && e.target !== jobSelectBtn){
+    jobSelectPanel.classList.remove('open');
+  }
+});
+document.getElementById('selectAllBtn').addEventListener('click', ()=>{
+  selectedM200 = new Set(M200_JOBS.map(j=>j.Job));
+  jobCheckList.querySelectorAll('input').forEach(i=>i.checked=true);
+  updateJobSelectCount();
+  renderAll();
+});
+document.getElementById('deselectAllBtn').addEventListener('click', ()=>{
+  selectedM200 = new Set();
+  jobCheckList.querySelectorAll('input').forEach(i=>i.checked=false);
+  updateJobSelectCount();
+  renderAll();
+});
+
+function getFiltered(){
+  const def = FILTER_DEFS.find(f=>f.key===activeFilter);
+  let data = ALL_JOBS.filter(def.test);
+  if (activeFilter === 'M200'){
+    data = data.filter(j => selectedM200.has(j.Job));
+  }
+  return data;
+}
+
+function renderAll(){
+  const data = getFiltered();
+  renderKPIs(data);
+  renderTopChart(data);
+  renderYearChart(data);
+  renderQuarterChart(data);
+  renderTable();
+}
+
+function renderKPIs(data){
+  const totalNCRLinks = data.reduce((s,r)=>s+r.Total,0);
+  const totalJobs = data.length;
+  const avgPerJob = totalJobs ? (totalNCRLinks/totalJobs).toFixed(1) : '0';
+  const worst = data.length ? [...data].sort((a,b)=>b.Total-a.Total)[0] : {Job:'—', Total:0};
+  const kpis = [
+    {label:'Total NCR–Job Links', value: totalNCRLinks, note: activeFilter + ' · 2024–2026'},
+    {label:'Jobs Affected', value: totalJobs, note: 'unique jobs with \u22651 NCR'},
+    {label:'Avg NCRs per Job', value: avgPerJob, note: 'across affected jobs'},
+    {label:'Worst Job', value: worst.Job, note: worst.Total + ' NCRs total'},
+  ];
+  const kpiRow = document.getElementById('kpiRow');
+  kpiRow.innerHTML = '';
+  kpis.forEach(k=>{
+    const div = document.createElement('div');
+    div.className = 'kpi-card';
+    div.innerHTML = `<div class="label">${k.label}</div><div class="value">${k.value}</div><div class="note">${k.note}</div>`;
+    kpiRow.appendChild(div);
+  });
+}
+
+function renderTopChart(data){
+  document.getElementById('topSubtitle').textContent =
+    (activeFilter==='All' ? 'Highest total non-conformance reports, all jobs' : `Highest total NCRs — ${activeFilter} jobs only`) + ', 2024–2026 combined';
+  const top15 = [...data].sort((a,b)=>b.Total-a.Total).slice(0,15);
+  const topChart = document.getElementById('topJobsChart');
+  topChart.innerHTML = '';
+  if (!top15.length){ topChart.innerHTML = '<div style="padding:20px;color:var(--text-muted);font-size:13px;">No jobs selected.</div>'; return; }
+  const maxTotal = top15[0].Total || 1;
+  top15.forEach(r=>{
+    const pct = (r.Total/maxTotal*100);
+    const row = document.createElement('div');
+    row.className = 'bar-row';
+    const showInside = pct > 20;
+    row.innerHTML = `
+      <div class="bar-label">${r.Job}</div>
+      <div class="bar-track">
+        <div class="bar-fill" style="width:${pct}%; background: linear-gradient(90deg, var(--accent), var(--accent-dark));">
+          ${showInside ? `<span class="bar-value">${r.Total}</span>` : ''}
+        </div>
+        ${!showInside ? `<span class="bar-value outside" style="position:absolute; left:${pct}%; top:1px;">${r.Total}</span>` : ''}
+      </div>
+    `;
+    topChart.appendChild(row);
+  });
+}
+
+function renderYearChart(data){
+  const yearTotals = {
+    '2024': data.reduce((s,r)=>s+r.Years['2024'],0),
+    '2025': data.reduce((s,r)=>s+r.Years['2025'],0),
+    '2026': data.reduce((s,r)=>s+r.Years['2026'],0),
+  };
+  const yearChart = document.getElementById('yearChart');
+  yearChart.innerHTML = '';
+  const maxYear = Math.max(...Object.values(yearTotals), 1);
+  const yearColors = {'2024':'var(--y2024)','2025':'var(--y2025)','2026':'var(--y2026)'};
+  Object.entries(yearTotals).forEach(([yr,val])=>{
+    const h = val ? Math.max((val/maxYear*160), 20) : 4;
+    const col = document.createElement('div');
+    col.className = 'year-bar-col';
+    col.innerHTML = `
+      <div class="year-bar" style="height:${h}px; background:${yearColors[yr]};">
+        <span class="year-bar-value">${val}</span>
+      </div>
+      <div class="year-bar-label">${yr}</div>
+    `;
+    yearChart.appendChild(col);
+  });
+}
+
+function renderQuarterChart(data){
+  // Rate = total NCRs in quarter / number of distinct jobs (within selection) that had >=1 NCR that quarter
+  const rates = QUARTERS.map(q => {
+    const total = data.reduce((s,r)=>s+(r.Quarters[q]||0),0);
+    const activeJobs = data.filter(r => (r.Quarters[q]||0) > 0).length;
+    return activeJobs ? total/activeJobs : 0;
+  });
+  const chart = document.getElementById('quarterChart');
+  chart.innerHTML = '';
+  const maxRate = Math.max(...rates, 0.1);
+  QUARTERS.forEach((q,i)=>{
+    const val = rates[i];
+    const h = val ? Math.max((val/maxRate*140), 18) : 3;
+    const shortLabel = q.slice(4) + " '" + q.slice(2,4);
+    const displayVal = val ? val.toFixed(1) : '0';
+    const col = document.createElement('div');
+    col.className = 'quarter-bar-col';
+    col.innerHTML = `
+      <div class="quarter-bar" style="height:${h}px;">
+        <span class="quarter-bar-value ${val===0?'zero':''}">${displayVal}</span>
+      </div>
+      <div class="quarter-bar-label">${shortLabel}</div>
+    `;
+    chart.appendChild(col);
+  });
+}
+
+// Table
+const tbody = document.getElementById('tableBody');
+let sortKey = 'Total';
+let sortDir = -1;
+
+function renderTable(){
+  const q = document.getElementById('searchBox').value.trim().toLowerCase();
+  let rows = getFiltered().filter(r => !q || r.Job.toLowerCase().includes(q));
+  rows = rows.slice().sort((a,b)=>{
+    let av, bv;
+    if (sortKey==='2024'||sortKey==='2025'||sortKey==='2026'){ av=a.Years[sortKey]; bv=b.Years[sortKey]; }
+    else { av = a[sortKey]; bv = b[sortKey]; }
+    if (typeof av === 'string') { av = av.toLowerCase(); bv = bv.toLowerCase(); }
+    if (av < bv) return -1*sortDir;
+    if (av > bv) return 1*sortDir;
+    return 0;
+  });
+  tbody.innerHTML = '';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="job">${r.Job}</td>
+      <td class="num">${r.Category}</td>
+      <td class="num">${r.Years['2024']||''}</td>
+      <td class="num">${r.Years['2025']||''}</td>
+      <td class="num">${r.Years['2026']||''}</td>
+      <td class="num total">${r.Total}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('rowCount').textContent = rows.length + ' of ' + getFiltered().length + ' jobs';
+}
+
+document.querySelectorAll('th[data-key]').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if (sortKey === key) sortDir *= -1;
+    else { sortKey = key; sortDir = key==='Job'||key==='Category' ? 1 : -1; }
+    document.querySelectorAll('th .arrow').forEach(a=>a.textContent='');
+    th.querySelector('.arrow').textContent = sortDir===1 ? '▲' : '▼';
+    renderTable();
+  });
+});
+
+document.getElementById('searchBox').addEventListener('input', renderTable);
+renderAll();
+</script>
+</body>
+</html>
